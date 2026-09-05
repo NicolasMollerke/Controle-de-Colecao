@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum TipoColecao {
+  MANGA
+  QUADRINHO
+}
+
+enum StatusVolume {
+  ESTANTE   
+  DESEJO     
+}
+
+model Colecao {
+  id        Int         @id @default(autoincrement())
+  titulo    String      @db.VarChar(255)
+  tipo      TipoColecao
+  autor     String?     @db.VarChar(255)
+  editora   String?     @db.VarChar(100)
+  capaUrl   String?     @map("capa_url") @db.Text
+  volumes   Volume[]
+
+  @@map("colecoes")
+}
+
+model Volume {
+  id           Int          @id @default(autoincrement())
+  colecaoId    Int          @map("colecao_id")
+  numeroVolume Int          @map("numero_volume")
+  isbn         String?      @unique @db.VarChar(20)
+  capaUrl      String?      @map("capa_url") @db.Text
+  status       StatusVolume @default(ESTANTE)
+  lido         Boolean      @default(false)
+  nota         Decimal?     @db.Decimal(3, 1) // Ex: 8.5
+  dataInicio   DateTime?    @map("data_inicio") @db.Date 
+  dataFim      DateTime?    @map("data_fim") @db.Date   
+  criadoEm     DateTime     @default(now()) @map("criado_em")
+  colecao      Colecao      @relation(fields: [colecaoId], references: [id], onDelete: Cascade)
+
+  @@unique([colecaoId, numeroVolume], name: "unq_colecao_volume")
+  @@index([isbn])
+  @@map("volumes")
+}
